@@ -1,0 +1,33 @@
+#!/usr/bin/python
+
+import serial
+import sys
+import lcm
+sys.path.append('/home/pi/WebBot/lib')
+from exlcm import command_t
+
+ser = serial.Serial('/dev/ttyACM0', 9600)
+
+speed = '\xC8'
+
+def commandHandler(channel, data):
+    msg = command_t.decode(data)
+    if msg.command == "FWD":
+        ser.write('\xAA\x00\x01\x01\x00' + speed + speed)
+    elif msg.command == "RVS":
+        ser.write('\xAA\x01\x00\x00\x01' + speed + speed)
+    elif msg.command == "LFT":
+        ser.write('\xAA\x00\x01\x00\x01' + speed + speed)
+    elif msg.command == "RGT":
+        ser.write('\xAA\x01\x00\x01\x00' + speed + speed)
+    elif msg.command == "STP":
+        ser.write('\xAA\x00\x00\x00\x00\x00\x00')
+
+lc = lcm.LCM()
+subscription = lc.subscribe("COMMANDS", commandHandler)
+
+try:
+    while True:
+        lc.handle()
+except KeyboardInterrupt:
+    pass
